@@ -4,13 +4,47 @@ Herramienta interactiva de Blind SQL Injection para enumeracion completa de base
 
 ## Requisitos
 
+Instalamos `mariadb-server` , `apache2` y `php-mysql` para montarnos nuestro propio lab.
+
+```bash
+sudo apt install -y mariadb-server apache2 php-mysql
+```
+
+Instalamos dependencias de `Python`.
 ```bash
 pip install requests pwntools
 ```
 
+---
+
 ## Laboratorio de pruebas
 
+Ahora lanzamos `mysql`:
+
+```bash
+service mysql start
+```
+
+Comprobamos que esta corriendo:
+
+```bash
+service mysql status
+```
+
+Adicionalmente, verificamos si el puerto esta en escucha:
+
+```bash
+sudo ss -ltnp | grep 3306
+```
+
+---
+
 Vamos a empezar creando una `db` para nuestro lab, en `mysql` :
+
+```bash
+sudo mysql
+```
+Una vez dentro de `mysql`
 
 ```bash
 create database Pwned;
@@ -42,7 +76,9 @@ insert into users(id, username, password) values(2, 'amis13', 'amis1331!');
 insert into users(id, username, password) values(3, 'omar', 'ommarelhacker1313');
 ```
 
-Como vamos a crear un script en `PHP` , necesitamos ejecutar este comando para crear un usuario pero a nivel de `mysql` para que ese usuario pueda ejecutar el script:
+---
+
+Como vamos a crear un script en `PHP`, necesitamos ejecutar este comando para crear un usuario pero a nivel de `mysql` para que ese usuario pueda ejecutar el script:
 
 ```bash
 create user 'amis13'@'localhost' identified by 'amis1331';
@@ -54,7 +90,7 @@ Ahora le damos privilegios al usuario:
 grant all privileges on Pwned.* to 'amis13'@'localhost';
 ```
 
-Ahora salimos de `mysql` :
+Salimos de `mysql` :
 
 ```bash
 exit
@@ -73,6 +109,8 @@ Si no esta corriendo lo levantamos:
 ```bash
 service apache2 start
 ```
+
+---
 
 Crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
 > Debes poner `$username`, `$password` y `$database` acorde a tu configuración, si has usado otros nombres/password.
@@ -98,6 +136,8 @@ if ($response) {
 
 > La query del servidor usa comillas simples (`WHERE id = '$id'`), por lo que el tipo de inyeccion correcto es **String**.
 
+---
+
 ## Uso
 
 ```bash
@@ -110,6 +150,8 @@ La herramienta pedira de forma interactiva:
 2. **Parametro vulnerable** - Parametro inyectable (ej: `id`)
 3. **Tipo de inyeccion** - Numerica o String
 4. **Metodo de deteccion** - Conditional (Status Code) o Time-Based (Sleep)
+
+---
 
 ## Tipos de inyeccion
 
@@ -137,6 +179,8 @@ SELECT * FROM users WHERE id = '[input]'
 ?id=-1' or ascii(substring((query),1,1))=72-- -
 ```
 
+---
+
 ## Metodos de deteccion
 
 ### Conditional (Status Code)
@@ -160,6 +204,8 @@ Determina si la condicion es verdadera midiendo el **tiempo de respuesta** del s
 | String | Conditional | `-1' or ascii(...)=72-- -` |
 | String | Time | `1' and if(ascii(...)=72,sleep(0.35),1)-- -` |
 
+---
+
 ## Verificacion automatica
 
 Antes de iniciar la fuerza bruta, la herramienta **verifica que la inyeccion funciona** enviando dos condiciones:
@@ -179,6 +225,8 @@ Si ambas devuelven el mismo resultado, la combinacion tipo/metodo no funciona y 
 [*] Prueba con otro tipo (numerica/string) o metodo (conditional/time)
 ```
 
+---
+
 ## Flujo de enumeracion
 
 ```
@@ -197,12 +245,16 @@ Verificacion
                                             +-- Dump de todos los datos
 ```
 
+---
+
 ## Tecnicas utilizadas
 
 - **Fuerza bruta caracter a caracter** - Compara cada posicion con codigos ASCII (33-126)
 - **Valores en hexadecimal** - Los nombres de DB/tabla se convierten a hex para evitar conflictos de comillas dentro de la inyeccion
 - **group_concat con separador hex** - Usa `separator 0x2c` (coma en hex) para concatenar multiples resultados en un solo string
 - **Verificacion previa** - Test automatico TRUE/FALSE antes de empezar para no perder tiempo con una configuracion incorrecta
+
+---
 
 ## Ejemplo
 
@@ -270,14 +322,16 @@ Selecciona una tabla: 1
 sqli/
 ├── README.md
 └── status_code/
-    ├── sqli.py                # Herramienta principal (dinamica)
-    ├── sqli_conditional.py    # Script original - Status Code
-    └── sqli_time.py           # Script original - Time-Based
+    ├── sqli.py                # Herramienta principal
 ```
+
+---
 
 ## Disclaimer
 
 Esta herramienta es solo para fines educativos y pruebas de penetracion autorizadas. El uso indebido contra sistemas sin autorizacion es ilegal.
+
+---
 
 ## Autor
 
