@@ -10,13 +10,80 @@ pip install requests pwntools
 
 ## Laboratorio de pruebas
 
-Para probar la herramienta crea una base de datos, crea una tabla e introduce campos y columnas en la tabla, despues, crea un usuario y dale permisos en la base de datos, posteriormente crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
+## Lab
+
+Vamos a empezar creando una `db` para nuestro lab, en `mysql` :
+
+```bash
+create database Pwned;
+```
+
+Usamos la `db` que hemos creado:
+
+```bash
+use Pwned;
+```
+
+Creamos una tabla:
+
+```bash
+create table users(id int(32), username varchar(32), password varchar(32));
+```
+
+Ahora introducimos datos:
+
+```bash
+insert into users(id, username, password) values(1, 'admin', 'admin123$!p@$$');
+```
+
+```bash
+insert into users(id, username, password) values(2, 'amis13', 'amis1331!');
+```
+
+```bash
+insert into users(id, username, password) values(3, 'omar', 'ommarelhacker1313');
+```
+
+Como vamos a crear un script en `PHP` , necesitamos ejecutar este comando para crear un usuario pero a nivel de `mysql` para que ese usuario pueda ejecutar el script:
+
+```bash
+create user 'amis13'@'localhost' identified by 'amis1331';
+```
+
+Ahora le damos privilegios al usuario:
+
+```bash
+grant all privileges on Pwned.* to 'amis13'@'localhost';
+```
+
+Ahora salimos de `mysql` :
+
+```bash
+exit
+```
+
+---
+
+Vamos a cerciorarnos de que `Apache` esta corriendo:
+
+```bash
+service apache2 status
+```
+
+Si no esta corriendo lo levantamos:
+
+```bash
+service apache2 start
+```
+
+Crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
+> Debes poner `$username`, `$password` y `$database` acorde a tu configuración, si has usado otros nombres/password.
 
 ```php
 <?php
 $server = "localhost";
 $username = "amis13";
-$password = "amis13";
+$password = "amis1331";
 $database = "Pwned";
 
 $conn = new mysqli($server, $username, $password, $database);
