@@ -153,7 +153,7 @@ try {
 }
 ```
 
-> La query del servidor usa comillas simples (`WHERE id = '$id'`), por lo que el tipo de inyeccion correcto es **String**.
+> La query del servidor usa comillas simples (`WHERE id = '$id'`), por lo que el tipo de inyeccion correcto es **String** y el Metodo de deteccion que debemos usar es **Time-Based**.
 
 ---
 
