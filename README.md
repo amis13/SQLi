@@ -10,8 +10,6 @@ pip install requests pwntools
 
 ## Laboratorio de pruebas
 
-## Lab
-
 Vamos a empezar creando una `db` para nuestro lab, en `mysql` :
 
 ```bash
