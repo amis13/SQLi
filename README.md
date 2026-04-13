@@ -117,20 +117,39 @@ Crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
 
 ```php
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $server = "localhost";
 $username = "amis13";
 $password = "amis1331";
 $database = "Pwned";
 
-$conn = new mysqli($server, $username, $password, $database);
-$id = $_GET['id'] ?? '';
-$data = mysqli_query($conn, "SELECT username FROM users WHERE id = '$id'");
-$response = mysqli_fetch_array($data);
+try {
+    $conn = new mysqli($server, $username, $password, $database);
 
-if ($response) {
-    echo $response['username'];
-} else {
-    echo "No hay resultados";
+    if ($conn->connect_error) {
+        die("Error de conexión: " . $conn->connect_error);
+    }
+
+    $id = $_GET['id'] ?? '';
+
+    $data = mysqli_query($conn, "SELECT username FROM users WHERE id = '$id'");
+
+    if (!$data) {
+        die("Error SQL: " . mysqli_error($conn));
+    }
+
+    $response = mysqli_fetch_array($data);
+
+    if ($response) {
+        echo $response['username'];
+    } else {
+        echo "No hay resultados";
+    }
+
+} catch (Throwable $e) {
+    die("Excepción: " . $e->getMessage());
 }
 ```
 
