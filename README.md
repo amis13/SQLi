@@ -10,7 +10,7 @@ pip install requests pwntools
 
 ## Laboratorio de pruebas
 
-Para probar la herramienta, crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
+Para probar la herramienta crea una base de datos, crea una tabla e introduce campos y columnas en la tabla, despues, crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
 
 ```php
 <?php
