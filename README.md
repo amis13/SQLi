@@ -10,14 +10,14 @@ pip install requests pwntools
 
 ## Laboratorio de pruebas
 
-Para probar la herramienta crea una base de datos, crea una tabla e introduce campos y columnas en la tabla, despues, crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
+Para probar la herramienta crea una base de datos, crea una tabla e introduce campos y columnas en la tabla, despues, crea un usuario y dale permisos en la base de datos, posteriormente crea el siguiente script PHP en `/var/www/html/searchUsers.php`:
 
 ```php
 <?php
 $server = "localhost";
-$username = "s4vitar";
-$password = "s4vitar123";
-$database = "Hack4u";
+$username = "amis13";
+$password = "amis13";
+$database = "Pwned";
 
 $conn = new mysqli($server, $username, $password, $database);
 $id = $_GET['id'] ?? '';
@@ -135,7 +135,7 @@ Verificacion
 ## Tecnicas utilizadas
 
 - **Fuerza bruta caracter a caracter** - Compara cada posicion con codigos ASCII (33-126)
-- **Valores en hexadecimal** - Los nombres de DB/tabla se convierten a hex (`Hack4u` -> `0x4861636b3475`) para evitar conflictos de comillas dentro de la inyeccion
+- **Valores en hexadecimal** - Los nombres de DB/tabla se convierten a hex para evitar conflictos de comillas dentro de la inyeccion
 - **group_concat con separador hex** - Usa `separator 0x2c` (coma en hex) para concatenar multiples resultados en un solo string
 - **Verificacion previa** - Test automatico TRUE/FALSE antes de empezar para no perder tiempo con una configuracion incorrecta
 
@@ -166,7 +166,7 @@ Verificacion
 [+] Inyeccion verificada correctamente (TRUE=diferente de FALSE)
 
 [*] Extrayendo bases de datos...
-[+] Bases de datos: information_schema,Hack4u
+[+] Bases de datos: information_schema,Pwned
 
 ============================================================
   BASES DE DATOS
@@ -175,12 +175,12 @@ Verificacion
 | # | Database           |
 +---+--------------------+
 | 1 | information_schema |
-| 2 | Hack4u             |
+| 2 | Pwned             |
 +---+--------------------+
 
 Selecciona una base de datos: 2
 
-[+] Tablas [Hack4u]: users
+[+] Tablas [Pwned]: users
 
 Selecciona una tabla: 1
 [+] Columnas [users]: id,username,password
@@ -188,7 +188,7 @@ Selecciona una tabla: 1
 [*] Dumpeando todas las columnas de 'users'...
 
 ============================================================
-  DUMP DE 'Hack4u.users'
+  DUMP DE 'Pwned.users'
 ============================================================
 +---+----+----------+----------+
 | # | id | username | password |
